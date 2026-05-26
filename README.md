@@ -113,6 +113,24 @@ Patient Email (Gmail)
 
 This exposes the live sheet data as a REST API consumed by the dashboard.
 
+### 2. `MediCore Systems API` — Dashboard Data Feed
+
+| Node | Role |
+|------|------|
+| Webhook (GET) | Exposes a GET endpoint for the dashboard |
+| Get row(s) in sheet | Reads all rows from the MediCore Google Sheet |
+| Respond to Webhook | Returns rows as JSON to the dashboard |
+
+### 📸 Workflow Screenshots
+
+**Main Intake Pipeline**
+![n8n Main Workflow](docs/n8n-workflow.png)
+
+**MediCore Data API**
+![n8n API Workflow](docs/n8n-api-workflow.png)
+
+---
+
 ---
 
 ## ⚡ Features
