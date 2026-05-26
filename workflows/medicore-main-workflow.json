@@ -1,0 +1,434 @@
+{
+  "name": "MediCore Systems",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "q": "-from:noreply -from:no-reply -from:notifications -from:alerts -category:updates -category:promotions"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -720,
+        -64
+      ],
+      "id": "a5f76d4b-c23a-46af-9d0a-1d2cffb841f5",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ESnoUvKL2YI6fuAA",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a hospital operations AI assistant. Carefully analyze the patient email below and extract structured intake information for the hospital operations log.\n\nFrom: {{ $json.from }}\nSubject: {{ $json.subject }}\nEmail: {{ $json.text || $json.snippet }}\n\nFIRST - Check if this is a real patient email. If the email is any of the following, set status to \"Skip\":\n- Promotional or marketing email\n- Newsletter or subscription email\n- Sales or discount offer\n- Shipping or order confirmation\n- Spam or unrelated content\n- Auto-generated system email\n- Any email NOT from a real patient about a medical concern\n\nRules:\n- Be concise and clinical in tone.\n- If information is missing or unclear, make a reasonable inference based on context.\n- confidence_score must be a decimal between 0.0 and 1.0.\n- sla_timer is in hours: Critical = 1, High = 4, Normal = 24, Low = 72.\n- assigned_team should reflect the most appropriate staff group.\n- patient_name should be extracted in this priority order:\n  1. Explicit \"Patient Name:\" field in the email body\n  2. Full name from email signature (after \"Regards,\" \"Sincerely,\" \"Thank you,\" etc.)\n  3. Full name mentioned in the email body\n  4. Full name from the From field ONLY if not a forwarded email\n  5. \"Unknown\" if no name found at all\n- If the email is a forwarded message, extract patient details from the forwarded content body, NOT from the From field.\n- intake_source is always \"Email\".\n- status is \"Open\" for real patient emails, \"Skip\" for non-patient emails.\n\nUrgency classification — follow STRICTLY, no exceptions:\n- Critical: Immediately life-threatening ONLY — cardiac arrest, stroke, unconscious, stopped breathing, severe burns, no pulse\n- High: Serious but stabilizable — high fever WITH complications, seizure, hypoglycemia, severe chest pain, difficulty breathing\n- Normal: Non-urgent medical needs — appointments, follow-ups, billing questions, check-ups, physical exams, general medical inquiries\n- Low: Administrative requests ONLY — lab result requests, general inquiries, prescription refill requests, insurance documents, medical certificates, vaccination inquiries\n\nReturn ONLY this exact JSON, no backticks, no markdown, no explanation:\n{\n  \"patient_name\": \"extracted name or Unknown\",\n  \"intake_source\": \"Email\",\n  \"case_type\": \"Appointment|Emergency|Billing|Lab Results|Follow-up|Non-Patient\",\n  \"department\": \"Cardiology|Neurology|Orthopedics|General|Billing|Radiology|ICU|Emergency\",\n  \"urgency\": \"Critical|High|Normal|Low\",\n  \"ai_clinical_summary\": \"one sentence clinical summary\",\n  \"recommended_action\": \"short specific action for staff\",\n  \"assigned_team\": \"ICU Team|Emergency Response|Cardiology Team|Billing Department|General Practice\",\n  \"status\": \"Open|Skip\",\n  \"confidence_score\": 0.0,\n  \"sla_timer\": 0\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -560,
+        -64
+      ],
+      "id": "22bb6fde-7af4-4b78-9011-b94e2267b900",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "xfXn4DQOLtInQWsj",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst text =\n  item.json?.message?.content?.[0]?.text ||\n  item.output?.[0]?.content?.[0]?.text ||\n  item.content?.[0]?.text ||\n  \"\";\nconst raw = text.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\nlet data;\ntry {\n  data = JSON.parse(raw);\n} catch(e) {\n  return [];\n}\n\ndata.case_id = `CASE-${Date.now()}`;\n\nif (data.status === \"Skip\" || data.patient_name === \"SKIP\") {\n  return [];\n}\n\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -64
+      ],
+      "id": "6842556f-df3b-41ad-aed6-45e5db2ea738",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1l1tJycLIQl76qPX2U57UgaYZoVYLAAn9FKUY6bIc6Us",
+          "mode": "list",
+          "cachedResultName": "MediCore Systems",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1l1tJycLIQl76qPX2U57UgaYZoVYLAAn9FKUY6bIc6Us/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1542421775,
+          "mode": "list",
+          "cachedResultName": "Operations Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1l1tJycLIQl76qPX2U57UgaYZoVYLAAn9FKUY6bIc6Us/edit#gid=1542421775"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Case ID": "={{ $json.case_id }}",
+            "Timestamp": "={{ DateTime.now().setZone('Asia/Manila').toFormat('yyyy-MM-dd HH:mm:ss') }}",
+            "Patient Name": "={{ $json.patient_name }}",
+            "Intake Source": "={{ $json.intake_source }}",
+            "Case Type": "={{ $json.case_type }}",
+            "Department": "={{ $json.department }}",
+            "Urgency Level": "={{ $json.urgency }}",
+            "AI Clinical Summary": "={{ $json.ai_clinical_summary }}",
+            "Recommended Action": "={{ $json.recommended_action }}",
+            "Assigned Team": "={{ $json.assigned_team }}",
+            "Status": "={{ $json.status }}",
+            "Confidence Score": "={{ $json.confidence_score }}",
+            "SLA Timer (hrs)": "={{ $json.sla_timer }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Case ID",
+              "displayName": "Case ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Intake Source",
+              "displayName": "Intake Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Case Type",
+              "displayName": "Case Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Department",
+              "displayName": "Department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency Level",
+              "displayName": "Urgency Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Clinical Summary",
+              "displayName": "AI Clinical Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended Action",
+              "displayName": "Recommended Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned Team",
+              "displayName": "Assigned Team",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Confidence Score",
+              "displayName": "Confidence Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SLA Timer (hrs)",
+              "displayName": "SLA Timer (hrs)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -112,
+        -64
+      ],
+      "id": "c21dbc6d-68b9-4f57-9bd7-e5be4aa917f1",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Ds6hQwZTj1jq5Fw",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b524c926-b29b-427e-b3d5-7f4c60223def",
+              "leftValue": "={{ $json['Urgency Level'] }}",
+              "rightValue": "Critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a03936a1-5181-4868-b500-7622430aab71",
+              "leftValue": "={{ $json['Urgency Level'] }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        48,
+        -64
+      ],
+      "id": "fd3818f1-16b7-4fe1-9aa9-2853df9fd534",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#critical-alerts",
+          "mode": "name"
+        },
+        "text": "=🚨 *CRITICAL ALERT* 🚨\n\n*Case ID:* {{$json['Case ID']}}\n*Patient:* {{$json['Patient Name']}}\n*Department:* {{$json['Department']}}\n*Case Type:* {{$json['Case Type']}}\n*Urgency:* {{$json['Urgency Level']}}\n\n*Clinical Summary:* {{$json['AI Clinical Summary']}}\n*Recommended Action:* {{$json['Recommended Action']}}\n*Assigned Team:* {{$json['Assigned Team']}}\n*SLA:* Respond within {{$json['SLA Timer (hrs)']}} hour(s)\n*Confidence:* {{$json['Confidence Score']}}\n*Status:* {{$json['Status']}}\n\n_Automated with this n8n workflow_",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "f696433a-e282-4c1a-97fa-e6d7a2c2d46a",
+      "name": "Send a message",
+      "webhookId": "da9f045c-1740-4db1-9c51-dd1623327c83",
+      "credentials": {
+        "slackApi": {
+          "id": "Te3m3MMfuPlsWqZY",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#hospital-alerts",
+          "mode": "name"
+        },
+        "text": "=📋 NEW INTAKE CASE\n\nCase ID: {{ $('Code in JavaScript').item.json.case_id }}\nPatient Name: {{ $('Code in JavaScript').item.json.patient_name }}\nCase Type: {{ $('Code in JavaScript').item.json.case_type }}\nDepartment: {{ $('Code in JavaScript').item.json.department }}\nUrgency: {{ $('Code in JavaScript').item.json.urgency }}\nClinical Summary: {{ $('Code in JavaScript').item.json.ai_clinical_summary }}\nRecommended Action: {{ $('Code in JavaScript').item.json.recommended_action }}\nAssigned Team: {{ $('Code in JavaScript').item.json.assigned_team }}\nSLA: Respond within {{ $('Code in JavaScript').item.json.sla_timer }} hour(s)\nConfidence: {{ $('Code in JavaScript').item.json.confidence_score }}\nStatus: {{ $('Code in JavaScript').item.json.status }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        240,
+        16
+      ],
+      "id": "18e2dde5-fc78-48e1-8494-618274de1310",
+      "name": "Send a message1",
+      "webhookId": "076b400e-8cb6-45d8-ad60-6399aa9f4fcf",
+      "credentials": {
+        "slackApi": {
+          "id": "Te3m3MMfuPlsWqZY",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e2d05329-398b-4a6a-8884-bc383fd6c21a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "31df2d293f81ba54ab077046912325426e4ef2898a995c7d6dbd07dd74b2e068"
+  },
+  "id": "nHq489Dsgv2b4Vyx",
+  "tags": []
+}

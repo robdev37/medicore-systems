@@ -1,0 +1,105 @@
+{
+  "name": "MediCore Data API",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "medicore-data",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "98ab6050-f7d9-4643-a1ed-f5ee87addfa7",
+      "name": "Webhook",
+      "webhookId": "a503546f-9022-4333-9fd8-448338e33166"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1l1tJycLIQl76qPX2U57UgaYZoVYLAAn9FKUY6bIc6Us",
+          "mode": "list",
+          "cachedResultName": "MediCore Systems",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1l1tJycLIQl76qPX2U57UgaYZoVYLAAn9FKUY6bIc6Us/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1542421775,
+          "mode": "list",
+          "cachedResultName": "Operations Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1l1tJycLIQl76qPX2U57UgaYZoVYLAAn9FKUY6bIc6Us/edit#gid=1542421775"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b9d48852-02f2-4ab5-afb1-7df07654cdc8",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Ds6hQwZTj1jq5Fw",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "5464f6f3-b4fb-4d0d-ae9b-d8d413fa22d6",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "29776dc7-2170-4a60-9890-3cb0f991a495",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "31df2d293f81ba54ab077046912325426e4ef2898a995c7d6dbd07dd74b2e068"
+  },
+  "id": "Zj13NSbnYJ6XryEO",
+  "tags": []
+}
